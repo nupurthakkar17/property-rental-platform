@@ -1,5 +1,8 @@
 {
-  "name": "airbnb",
+  "engines":{
+    "node": "22.20.0"
+  },
+  "name": "Property Rental Webstie",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
