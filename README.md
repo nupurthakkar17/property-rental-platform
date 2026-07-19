@@ -81,7 +81,7 @@ node app.js
 5. Open your browser and visit:
 
 
-http://localhost:3000
+http://localhost:8080/listings
 
 
 ## Learning Outcomes
