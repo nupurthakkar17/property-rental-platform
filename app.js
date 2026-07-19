@@ -10,6 +10,7 @@ const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 const flash= require("connect-flash");
 const session = require("express-session");
+const MongoStore=require('connect-mongo');
 const passport= require("passport");
 const LocalStrategy= require("passport-local");
 const User=require("./models/user.js");
@@ -18,7 +19,7 @@ const listingRouter=require("./routes/listing.js");
 const reviewRouter =require("./routes/review.js");
 const userRouter =require("./routes/user.js");
 
-
+const dbUrl=process.env.ATLASDB_URL;
 
 main()
   .then(() => {
@@ -29,7 +30,7 @@ main()
   });
 
 async function main() {
-  await mongoose.connect(MONGO_URL);
+  await mongoose.connect(dbUrl);
 }
 
 app.set("view engine", "ejs");
@@ -39,7 +40,17 @@ app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 app.use(express.static(path.join(__dirname, "/public")));
 
+const store= MongoStore.create({
+  mongoUrl:dbUrl,
+   touchAfter:24*3600,
+});
+
+store.on("error",(err)=>{
+  console.log("ERROR in Mongo Session Store",err);
+});
+
 const sessionOptions={
+  store,
   secret: process.env.SECRET,
   resave:false,
   saveUninitialized :true,
@@ -87,9 +98,15 @@ app.use(notFoundHandler);
 // Error handler middleware
 app.use((err, req, res, next) => {
   const { statusCode = 500, message = "Something went wrong!" } = err;
- res.status(statusCode).render("error.ejs",{message});
+  res.status(statusCode).render("error.ejs", {
+    message,
+    currUser: req.user || null,
+    success: typeof req.flash === "function" ? req.flash("success") : [],
+    error: typeof req.flash === "function" ? req.flash("error") : [],
+  });
 });
 
-app.listen(8080, () => {
-  console.log("listening on port 8080");
+const port = process.env.PORT || 8080;
+app.listen(port, () => {
+  console.log(`listening on port ${port}`);
 });
